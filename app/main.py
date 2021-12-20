@@ -30,6 +30,7 @@ def demo():
 
 
 class GithubApp(object):
+
     def __init__(self):
         self.meta = config
         self._auth, self.expires_at, self.gh = None, None, None
