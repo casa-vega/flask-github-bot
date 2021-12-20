@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-import time # for sleep, not required
+import time  # for sleep, not required
 
 
 from flask import Flask, request
@@ -26,34 +26,30 @@ def demo():
             """
             cr.update_success()
     return ("", 201)
-    
+
 
 class GithubApp(object):
-
     def __init__(self):
         self.meta = config
         self._auth, self.expires_at, self.gh = None, None, None
         with open(self.meta["pem"]) as private_key:
             self.private_key = private_key.read()
 
-
     @staticmethod
     def auth(func):
         def wrapper(self, *args, **kwargs):
             self.github_client() if not self.gh or self.is_expired() else None
             return func(self, *args, **kwargs)
-        return wrapper
 
+        return wrapper
 
     def is_expired(self):
         return datetime.now().timestamp() + 60 >= self.expires_at.timestamp()
-
 
     def token(self):
         return GithubIntegration(
             self.meta.get("app_id"), self.private_key
         ).get_access_token(self.meta.get("installation_id"))
-
 
     def github_client(self):
         self._auth = self.token()
@@ -62,32 +58,29 @@ class GithubApp(object):
 
 
 class GithubCheckRun(GithubApp):
-
     def __init__(self, req):
         super().__init__()
         self.req = req
 
-
     @GithubApp.auth
     def check_run(self, **kwargs):
         repo = self.gh.get_repo(self.req["repository"]["full_name"])
-        repo.create_check_run(**{
-            "name": "integration/flask-demo",
-            "head_sha": self.req["pull_request"]["head"]["sha"],
-            "started_at": datetime.now(),
-            "details_url": self.req["pull_request"]["html_url"],
-            "external_id": str(self.req["pull_request"]["number"]),
-            **kwargs
-        })
-
+        repo.create_check_run(
+            **{
+                "name": "integration/flask-demo",
+                "head_sha": self.req["pull_request"]["head"]["sha"],
+                "started_at": datetime.now(),
+                "details_url": self.req["pull_request"]["html_url"],
+                "external_id": str(self.req["pull_request"]["number"]),
+                **kwargs,
+            }
+        )
 
     def create(self):
         self.check_run(status="in_progress")
 
-
     def update_success(self):
         self.check_run(status="completed", conclusion="success")
-
 
     def update_failure(self):
         self.check_run(status="completed", conclusion="failure")
