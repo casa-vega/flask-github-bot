@@ -28,7 +28,6 @@ def demo():
     return ("", 201)
     
 
-
 class GithubApp(object):
 
     def __init__(self):
